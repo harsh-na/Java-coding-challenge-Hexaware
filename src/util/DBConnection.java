@@ -1,30 +1,44 @@
 package util;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
 public class DBConnection {
 
-	private static Connection connection = null;
+	private static Connection connection;
 
-	public static Connection getConnection() throws SQLException, ClassNotFoundException {
-		if (connection == null) {
-			// Load the MySQL JDBC driver
+	// Static block to load the driver class and establish the connection
+	static {
+		try {
+			// Load the database driver
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			System.out.println("Driver class loaded");
 
-			// Load properties file
-			Properties props = PropertyUtil.getPropertyString(); // No argument needed now
-
-			String url = props.getProperty("url");
-			String user = props.getProperty("username");
-			String password = props.getProperty("password");
-
-			// Establish the connection
-			connection = DriverManager.getConnection(url, user, password);
+			// Initialize connection using properties
+			connection = getConnection();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
 		}
+	}
+
+	public static Connection getConnection() {
+		if (connection != null) {
+			return connection;
+		}
+
+		try {
+			// Retrieve connection properties using PropertyUtil
+			String dbUrl = PropertyUtil.getPropertyString();
+
+			if (dbUrl != null) {
+				// Create connection using the URL from properties
+				connection = DriverManager.getConnection(dbUrl);
+			}
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+		}
+
 		return connection;
 	}
 }

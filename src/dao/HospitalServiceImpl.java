@@ -9,15 +9,20 @@ import java.util.List;
 
 import entity.Appointment;
 import myexceptions.PatientNumberNotFoundException;
-import util.DBConnection;
 
 public class HospitalServiceImpl implements IHospitalService {
+
+	private Connection connection; // Initialized elsewhere
+
+	public HospitalServiceImpl(Connection connection) {
+		this.connection = connection;
+	}
 
 	@Override
 	public Appointment getAppointmentById(int appointmentId) throws ClassNotFoundException {
 		Appointment appointment = null;
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Appointment WHERE appointmentId = ?")) {
+		String query = "SELECT * FROM Appointment WHERE appointmentId = ?";
+		try (PreparedStatement stmt = connection.prepareStatement(query)) {
 			stmt.setInt(1, appointmentId);
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
@@ -35,8 +40,8 @@ public class HospitalServiceImpl implements IHospitalService {
 	@Override
 	public List<Appointment> getAppointmentsForPatient(int patientId) throws ClassNotFoundException {
 		List<Appointment> appointments = new ArrayList<>();
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Appointment WHERE patientId = ?")) {
+		String query = "SELECT * FROM Appointment WHERE patientId = ?";
+		try (PreparedStatement stmt = connection.prepareStatement(query)) {
 			stmt.setInt(1, patientId);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
@@ -52,8 +57,8 @@ public class HospitalServiceImpl implements IHospitalService {
 	@Override
 	public List<Appointment> getAppointmentsForDoctor(int doctorId) throws ClassNotFoundException {
 		List<Appointment> appointments = new ArrayList<>();
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Appointment WHERE doctorId = ?")) {
+		String query = "SELECT * FROM Appointment WHERE doctorId = ?";
+		try (PreparedStatement stmt = connection.prepareStatement(query)) {
 			stmt.setInt(1, doctorId);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
@@ -68,49 +73,44 @@ public class HospitalServiceImpl implements IHospitalService {
 
 	@Override
 	public boolean scheduleAppointment(Appointment appointment) throws ClassNotFoundException {
-		boolean success = false;
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(
-						"INSERT INTO Appointment (patientId, doctorId, appointmentDate, description) VALUES (?, ?, ?, ?)")) {
+		String query = "INSERT INTO Appointment (patientId, doctorId, appointmentDate, description) VALUES (?, ?, ?, ?)";
+		try (PreparedStatement stmt = connection.prepareStatement(query)) {
 			stmt.setInt(1, appointment.getPatientId());
 			stmt.setInt(2, appointment.getDoctorId());
 			stmt.setString(3, appointment.getAppointmentDate());
 			stmt.setString(4, appointment.getDescription());
-			success = stmt.executeUpdate() > 0;
+			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
-		return success;
 	}
 
 	@Override
 	public boolean updateAppointment(Appointment appointment) throws ClassNotFoundException {
-		boolean success = false;
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(
-						"UPDATE Appointment SET patientId = ?, doctorId = ?, appointmentDate = ?, description = ? WHERE appointmentId = ?")) {
+		String query = "UPDATE Appointment SET patientId = ?, doctorId = ?, appointmentDate = ?, description = ? WHERE appointmentId = ?";
+		try (PreparedStatement stmt = connection.prepareStatement(query)) {
 			stmt.setInt(1, appointment.getPatientId());
 			stmt.setInt(2, appointment.getDoctorId());
 			stmt.setString(3, appointment.getAppointmentDate());
 			stmt.setString(4, appointment.getDescription());
 			stmt.setInt(5, appointment.getAppointmentId());
-			success = stmt.executeUpdate() > 0;
+			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
-		return success;
 	}
 
 	@Override
 	public boolean cancelAppointment(int appointmentId) throws ClassNotFoundException {
-		boolean success = false;
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement("DELETE FROM Appointment WHERE appointmentId = ?")) {
+		String query = "DELETE FROM Appointment WHERE appointmentId = ?";
+		try (PreparedStatement stmt = connection.prepareStatement(query)) {
 			stmt.setInt(1, appointmentId);
-			success = stmt.executeUpdate() > 0;
+			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
-		return success;
 	}
 }
